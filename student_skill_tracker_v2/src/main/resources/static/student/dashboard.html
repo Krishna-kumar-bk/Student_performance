@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Dashboard | Tracker</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: "Poppins", sans-serif; background: linear-gradient(-45deg, #0d0d0d, #1b1b1b, #2d2d2d, #1a1a1a); background-size: 400% 400%; animation: bgAnimation 10s ease infinite; color: #e0e0e0; display: flex; min-height: 100vh; overflow-x: hidden; }
+        @keyframes bgAnimation { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        
+        /* --- Standardized Sidebar --- */
+        .sidebar { width: 260px; height: 100vh; background: rgba(20, 20, 20, 0.8); padding: 20px; border-right: 1px solid #333; position: fixed; top: 0; left: 0; z-index: 1000; backdrop-filter: blur(10px); }
+        .logo { text-align: center; margin-bottom: 20px; font-size: 28px; font-weight: 700; color: #fff; }
+        .menu { list-style: none; padding: 0; }
+        .menu li { margin: 12px 0; }
+        .menu li a { color: #b0b0b0; text-decoration: none; font-size: 16px; display: flex; gap: 12px; align-items: center; padding: 10px 15px; border-radius: 8px; transition: 0.3s; cursor: pointer; }
+        .menu li a:hover, .menu li a.active { background: rgba(255, 255, 255, 0.1); color: #fff; }
+
+        /* --- Main Content Alignment --- */
+        .main { margin-left: 260px; width: calc(100% - 260px); padding: 40px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h1 { font-size: 28px; font-weight: 600; color: #fff; }
+        
+        .card { background: rgba(255, 255, 255, 0.06); padding: 20px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.15); margin-bottom: 20px; backdrop-filter: blur(6px); }
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+        .stat-box { text-align: center; padding: 20px; transition: 0.3s; }
+        .stat-box:hover { transform: translateY(-5px); border-color: rgba(255,255,255,0.3); }
+        .stat-box h3 { font-size: 12px; color: #aaa; margin-bottom: 5px; text-transform: uppercase; }
+        .stat-box p { font-size: 28px; font-weight: 700; margin: 0; color: #fff; }
+        .stat-icon { font-size: 30px; margin-bottom: 10px; }
+
+        .dashboard-row { display: grid; grid-template-columns: 1.6fr 1fr; gap: 25px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th { text-align: left; color: #3498db; padding: 12px; border-bottom: 1px solid #444; font-size: 13px; }
+        td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); color: #ddd; font-size: 13px; }
+        .rank-badge { background: #f1c40f; color: #000; font-weight: bold; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; }
+    </style>
+</head>
+<body>
+
+<aside class="sidebar">
+    <h2 class="logo">Student</h2>
+    <ul class="menu">
+        <li><a href="dashboard.html" class="active"><i class="fa fa-home"></i> Dashboard</a></li>
+        <li><a href="leetcode.html"><i class="fa-brands fa-codepen"></i> LeetCode</a></li>
+        <li><a href="github.html"><i class="fa-brands fa-github"></i> GitHub</a></li>
+        <li><a href="hackerrank.html"><i class="fa-brands fa-hackerrank"></i> HackerRank</a></li>
+        <li><a href="gfg.html"><i class="fa-solid fa-code"></i> GeeksforGeeks</a></li>
+        <li><a href="linkedin.html"><i class="fa-brands fa-linkedin"></i> LinkedIn</a></li>
+        <li><a href="daily-coding.html"><i class="fa-solid fa-book"></i> Daily Coding</a></li>
+        <li><a href="certificates.html"><i class="fa-solid fa-award"></i> Certificates</a></li>
+        <li><a href="resume.html"><i class="fa-solid fa-file"></i> Resume</a></li>
+        <li><a href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a></li>
+        <li><a onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</a></li>
+    </ul>
+</aside>
+
+<main class="main">
+    <div class="header">
+        <h1>Welcome, <span id="studentName" style="color:#2ecc71;">User</span></h1>
+        <button id="syncBtn" onclick="syncData()" style="padding:10px 20px; background:#3498db; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">
+            <i class="fa-solid fa-rotate"></i> Sync Data
+        </button>
+    </div>
+    
+    <section class="stats-grid">
+        <div class="card stat-box"><i class="fa-solid fa-users stat-icon" style="color:#3498db;"></i><h3>Total Students</h3><p id="totalStudents">0</p></div>
+        <div class="card stat-box"><i class="fa-solid fa-code stat-icon" style="color:#ffa116;"></i><h3>Class Total LC</h3><p id="classLC">0</p></div>
+        <div class="card stat-box"><i class="fa-solid fa-award stat-icon" style="color:#9b59b6;"></i><h3>Total Certs</h3><p id="classCerts">0</p></div>
+        <div class="card stat-box"><i class="fa-solid fa-crown stat-icon" style="color:#f1c40f;"></i><h3>Top Performer</h3><p id="topPerformer" style="font-size:16px;">--</p></div>
+        <div class="card stat-box"><i class="fa-solid fa-ranking-star stat-icon" style="color:#2ecc71;"></i><h3>My Rank</h3><p id="myRank">--</p></div>
+        <div class="card stat-box"><i class="fa-solid fa-chevron-right stat-icon" style="color:#2ecc71;"></i><h3>My GFG Solved</h3><p id="myGfg">0</p></div>
+        <div class="card stat-box"><i class="fa-solid fa-brain stat-icon" style="color:#e67e22;"></i><h3>Aptitude Score</h3><p id="myAptitude">0</p></div>
+        <div class="card stat-box"><i class="fa-solid fa-school stat-icon" style="color:#e74c3c;"></i><h3>Dept</h3><p id="activeDept">CSE</p></div>
+    </section>
+
+    <div class="dashboard-row">
+        <section class="card">
+            <h2><span><i class="fa-solid fa-trophy" style="color:#f1c40f;"></i> Class Leaderboard</span></h2>
+            <table>
+                <thead><tr><th>#</th><th>Name</th><th>LC</th><th>GH</th><th>GFG</th><th>HR</th><th>Cert</th><th>Score</th></tr></thead>
+                <tbody id="leaderboardBody"></tbody>
+            </table>
+        </section>
+        
+        <section class="card">
+            <h2><i class="fa-solid fa-chart-simple"></i> Top 5 GFG vs Score</h2>
+            <div style="height:350px;"><canvas id="comparisonChart"></canvas></div>
+        </section>
+    </div>
+</main>
+
+<script>
+    const token = localStorage.getItem("jwt_token"); 
+    const userId = localStorage.getItem("user_id");
+    const userRole = localStorage.getItem("user_role");
+
+    document.addEventListener("DOMContentLoaded", () => {
+        if (!token) { window.location.href = "/"; return; }
+        if (userRole !== "STUDENT") { window.location.href = "/staff/dashboard.html"; return; }
+        loadDashboardData();
+    });
+
+    async function loadDashboardData() {
+        try {
+            const res = await fetch("/api/student/dashboard", { headers: { "Authorization": "Bearer " + token } });
+            const data = await res.json();
+            document.getElementById("studentName").innerText = data.studentName;
+            document.getElementById("totalStudents").innerText = data.totalStudents;
+            document.getElementById("classLC").innerText = data.classTotalLeetCode;
+            document.getElementById("classCerts").innerText = data.classTotalCertificates;
+            document.getElementById("topPerformer").innerText = data.topPerformerName;
+            document.getElementById("myRank").innerText = "#" + data.myRank;
+            document.getElementById("activeDept").innerText = data.mostActiveDept;
+            document.getElementById("myGfg").innerText = data.myGfgSolved || 0;
+            document.getElementById("myAptitude").innerText = data.myAptitudeScore || 0;
+            loadLeaderboard(data);
+        } catch (err) { console.error("Dash Load Error:", err); }
+    }
+
+    async function loadLeaderboard(userData) {
+        const res = await fetch("/api/student/leaderboard", { headers: { "Authorization": "Bearer " + token } });
+        const allStudents = await res.json();
+        const tbody = document.getElementById("leaderboardBody");
+        tbody.innerHTML = "";
+        allStudents.forEach((s, index) => {
+            let rank = index + 1;
+            if(index < 3) rank = `<span class="rank-badge" style="background:${index===0?'#f1c40f':index===1?'#bdc3c7':'#cd7f32'}">${rank}</span>`;
+            const isMe = s.studentName === userData.studentName;
+            tbody.innerHTML += `<tr style="${isMe ? 'background:rgba(46,204,113,0.15)' : ''}">
+                <td>${rank}</td>
+                <td style="color:${isMe?'#2ecc71':'white'}">${s.studentName}</td>
+                <td>${s.leetcode}</td>
+                <td>${s.github}</td>
+                <td>${s.gfg || 0}</td>
+                <td>${s.hackerrank}</td>
+                <td>${s.certificates}</td>
+                <td style="color:#f1c40f; font-weight:bold;">${s.totalScore}</td>
+            </tr>`;
+        });
+        renderComparisonChart(allStudents.slice(0, 5));
+    }
+
+    function renderComparisonChart(top5) {
+        const ctx = document.getElementById('comparisonChart').getContext('2d');
+        if (window.myChart) { window.myChart.destroy(); }
+        window.myChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: top5.map(s => s.studentName.split(" ")[0]),
+                datasets: [
+                    { label: 'Total Score', data: top5.map(s => s.totalScore), backgroundColor: '#2ecc71' },
+                    { label: 'GFG Solved', data: top5.map(s => s.gfg || 0), backgroundColor: '#3498db' }
+                ]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: '#333' } }, x: { grid: { display: false } } }, plugins: { legend: { labels: { color: '#fff' } } } }
+        });
+    }
+
+    function syncData() {
+        const btn = document.getElementById("syncBtn");
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-rotate fa-spin"></i> Syncing...`;
+        fetch("/api/student/refresh-all", { method: "POST", headers: { "Authorization": "Bearer " + token } })
+        .then(res => { if(res.ok) { alert("Data Synced!"); location.reload(); } else { alert("Sync Failed"); } })
+        .finally(() => btn.disabled = false);
+    }
+
+    function logout() { localStorage.clear(); window.location.href = "/"; }
+</script>
+</body>
+</html>
